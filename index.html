@@ -46,6 +46,15 @@ section.step { background: var(--panel); border: 1px solid var(--line); border-r
 .job dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; }
 .job dt { color: var(--muted); }
 .job dd { margin: 0; font-family: var(--mono); font-size: 12px; }
+.htoggle { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; position: relative; width: fit-content; }
+.htoggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.htoggle .sw { width: 40px; height: 22px; border-radius: 999px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.htoggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--panel); box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.htoggle input:checked + .sw { background: var(--navy); }
+.htoggle input:checked + .sw::after { transform: translateX(18px); }
+.htoggle input:focus-visible + .sw { outline: 2px solid var(--gold); outline-offset: 2px; }
+.htoggle input:disabled + .sw { opacity: .45; }
+.htoggle .hint { margin-left: 6px; }
 .files { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 760px) { .files { grid-template-columns: 1fr; } }
 .drop { border: 1.5px dashed var(--line); border-radius: 9px; padding: 16px; display: grid; gap: 6px; background: var(--bg); min-width: 0; position: relative; }
@@ -109,12 +118,12 @@ td.cm { color: var(--muted); font-size: 12.5px; min-width: 260px; }
         <p class="sub">Check Topcon field data against the calc before it leaves site.</p>
       </div>
     </div>
-    <span class="ver">tool v17 · rules 8 Nov 2026</span>
+    <span class="ver">tool v18 · rules 19 Nov 2026</span>
   </header>
 
   <section class="step" aria-labelledby="s1">
     <h2 id="s1"><span class="n">1</span>Job type</h2>
-    <p class="hint">Pick the job type first. It sets the tolerances and whether heights are graded.</p>
+    <p class="hint">Pick the job type first. It sets the tolerances and whether heights are graded - switch heights off for a position-only job.</p>
     <div class="jobs" role="radiogroup" aria-labelledby="s1">
       <label class="job"><input type="radio" name="job" id="job-detail" value="detail">
         <span class="t">Detail survey <span class="tick"></span></span>
@@ -126,6 +135,9 @@ td.cm { color: var(--muted); font-size: 12.5px; min-width: 260px; }
         <span class="t">Building setout <span class="tick"></span></span>
         <dl><dt>Heights</dt><dd>graded</dd><dt>Calc / checks</dt><dd>10/15 · 5/10 mm</dd><dt>Setout to design</dt><dd>5 mm pass/fail</dd></dl></label>
     </div>
+    <label class="htoggle"><input type="checkbox" id="heights" role="switch" disabled>
+      <span class="sw" aria-hidden="true"></span>
+      <span><strong>Check heights</strong> <span class="hint" id="hnote">Pick a job type first.</span></span></label>
   </section>
 
   <section class="step" aria-labelledby="s2">
@@ -649,7 +661,7 @@ function checks(pts, calcPts, raw) {
     if (a.code !== b.code) continue;
     const d = d2(a, b), v = (a.H !== null && b.H !== null) ? a.H - b.H : null;
     let com = `Scan control ${a.code} observed twice`;
-    if (v !== null && Math.abs(v) > 0.1) com += "; " + (thDiag(raw, a, b, v) || `heights differ by ${fx(Math.abs(v), 3)} m - check target height on one of these shots`);
+    if (HEIGHTS && v !== null && Math.abs(v) > 0.1) com += "; " + (thDiag(raw, a, b, v) || `heights differ by ${fx(Math.abs(v), 3)} m - check target height on one of these shots`);
     if (atRisk.has(a.name) || atRisk.has(b.name)) com += "; one shot is from the disturbed setup (see at-risk shot)";
     rows.push(row("L2b repeat obs", worst(light(d), vl(v)), a.name, `${b.name} (${b.code})`, d, v, com));
   }
@@ -898,8 +910,10 @@ function setoutRows(survey, allPts, calcPts, lines) {
 }
 
 // ---------------------------------------------------------------- run
-function run(surveyDoc, calcDoc, job) {
-  const prof = PROFILES[job]; if (!prof) throw new Error("Unknown job type " + job);
+function run(surveyDoc, calcDoc, job, opts = {}) {
+  if (!PROFILES[job]) throw new Error("Unknown job type " + job);
+  const prof = { ...PROFILES[job] };
+  if (typeof opts.heights === "boolean" && opts.heights !== prof.heights) { prof.heights = opts.heights; prof.heightsOverride = true; }
   HEIGHTS = prof.heights; [GREEN, ORANGE] = prof.survey; [BDY_GREEN, BDY_ORANGE] = prof.calc; SETOUT_MODE = prof.setout; SETOUT_TOL = prof.setout_tol || 0.005;
   const S = parse(surveyDoc);
   let lines = S.lines, calcPts = null, calcAll = null;
@@ -1033,7 +1047,7 @@ function svgWrap(body) { return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:x
 
 function titleLines(R) {
   const t = R.tol, prof = R.prof;
-  const mode = prof.label + (prof.heights ? " - heights included" : " - horizontal only") + ", " + (R.hasCalc ? "survey + calc file" : "single file") + (R.raw ? ", raw obs" : ", NO RAW OBS - no traverse/radiations");
+  const mode = prof.label + (prof.heights ? " - heights included" : " - horizontal only") + (prof.heightsOverride ? " (set by user)" : "") + ", " + (R.hasCalc ? "survey + calc file" : "single file") + (R.raw ? ", raw obs" : ", NO RAW OBS - no traverse/radiations");
   return [`Field QA - ${R.fileName || R.info.job}  (${mode})`,
     `1 Calc to survey: GREEN <=${f0(t.BDY_GREEN * 1000)} ORANGE <=${f0(t.BDY_ORANGE * 1000)} RED >${f0(t.BDY_ORANGE * 1000)} mm   2 Survey to survey: GREEN <=${f0(t.GREEN * 1000)} ORANGE <=${f0(t.ORANGE * 1000)} RED >${f0(t.ORANGE * 1000)} mm` + (prof.setout ? `   3 Setout: pass <=${f0(t.SETOUT_TOL * 1000)} mm` : "")];
 }
@@ -1418,7 +1432,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = API; else 
     $("run").disabled = !ok;
     $("runmsg").textContent = ok ? "Ready to check." : (!state.job ? "Choose a job type." : "Add both files.");
   }
-  document.querySelectorAll('input[name="job"]').forEach((r) => r.addEventListener("change", () => { state.job = r.value; readyCheck(); }));
+  const HDEF = { detail: true, cadastral: false, bso: true };
+  const hNote = () => { const on = $("heights").checked, def = HDEF[state.job];
+    $("hnote").textContent = on ? "Heights graded on checks, backsights and repeat shots." + (def ? "" : " (Off by default for this job type.)")
+      : "Position only (2D) - heights are not checked or reported." + (def ? " Use when the job only needs position, e.g. a 2D setout." : ""); };
+  document.querySelectorAll('input[name="job"]').forEach((r) => r.addEventListener("change", () => { state.job = r.value; $("heights").disabled = false; $("heights").checked = HDEF[r.value]; hNote(); readyCheck(); }));
+  $("heights").addEventListener("change", () => { hNote(); readyCheck(); });
   function describe(doc) {
     const root = doc.documentElement;
     const app = (root.getElementsByTagName("tps:Application")[0] || {}).textContent || "unknown";
@@ -1490,7 +1509,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = API; else 
     $("runmsg").textContent = "Checking..."; $("run").disabled = true;
     setTimeout(() => {
       try {
-        const R = QA.run(state.survey.doc, state.calc.doc, state.job);
+        const R = QA.run(state.survey.doc, state.calc.doc, state.job, { heights: $("heights").checked });
         R.fileName = state.survey.name;
         state.R = R; state.base = state.survey.name.replace(/\.[^.]+$/, "") + "_QA";
         state.sheets = { check: RD.checkPlot(R, LOGO), setout: RD.setoutSheet(R, LOGO), sketch: RD.clientSketch(R, LOGO) };

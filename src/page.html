@@ -1,0 +1,367 @@
+<title>Elevate Field QA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one working column - choose job, add two files, check, then review and download. Navy + survey gold from the Elevate mark. */
+:root {
+  --bg: #f5f6f8; --panel: #ffffff; --ink: #14233a; --muted: #5b6676; --line: #d9dee6; --soft: #eef1f5;
+  --navy: #0c2f5b; --gold: #b8862f; --gold-soft: #f6ecda;
+  --red: #c62f2f; --orange: #d9822b; --green: #23874f; --red-soft: #fbeaea; --orange-soft: #fcf1e5; --green-soft: #e7f4ec;
+  --display: "Public Sans", "Helvetica Neue", Arial, sans-serif; --body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1622; --panel: #152133; --ink: #e6ebf2; --muted: #9aa6b6; --line: #2a3a51; --soft: #1b2a3f;
+  --navy: #8fb4e6; --gold: #d9a94e; --gold-soft: #33291a;
+  --red: #ef6b6b; --orange: #f0a457; --green: #4fc283; --red-soft: #3a1f23; --orange-soft: #3a2b1c; --green-soft: #183326; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1622; --panel: #152133; --ink: #e6ebf2; --muted: #9aa6b6; --line: #2a3a51; --soft: #1b2a3f;
+  --navy: #8fb4e6; --gold: #d9a94e; --gold-soft: #33291a;
+  --red: #ef6b6b; --orange: #f0a457; --green: #4fc283; --red-soft: #3a1f23; --orange-soft: #3a2b1c; --green-soft: #183326; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; display: grid; gap: 22px; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid var(--gold); padding-bottom: 14px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand img { height: 46px; width: auto; }
+.logo-chip { background: #ffffff; border-radius: 6px; padding: 4px 8px; display: inline-flex; }
+h1 { font-family: var(--display); font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.sub { color: var(--muted); font-size: 13.5px; margin: 2px 0 0; }
+.ver { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+section.step { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.step h2 { font-family: var(--display); font-size: 16px; font-weight: 700; margin: 0; display: flex; align-items: baseline; gap: 10px; }
+.step h2 .n { color: var(--gold); font-family: var(--mono); font-weight: 600; font-size: 14px; }
+.hint { color: var(--muted); font-size: 13.5px; margin: 0; max-width: 70ch; }
+.jobs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .jobs { grid-template-columns: 1fr; } }
+.job { position: relative; border: 1.5px solid var(--line); border-radius: 9px; padding: 14px 14px 12px; cursor: pointer; display: grid; gap: 8px; background: var(--panel); }
+.job:hover { border-color: var(--navy); }
+.job input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.job:has(input:checked) { border-color: var(--navy); box-shadow: inset 0 0 0 1.5px var(--navy); background: var(--soft); }
+.job:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: 2px; }
+.job .t { font-weight: 700; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+.job .tick { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--line); display: inline-block; }
+.job:has(input:checked) .tick { border-color: var(--navy); background: radial-gradient(circle, var(--navy) 45%, transparent 50%); }
+.job dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; }
+.job dt { color: var(--muted); }
+.job dd { margin: 0; font-family: var(--mono); font-size: 12px; }
+.htoggle { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; position: relative; width: fit-content; }
+.htoggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.htoggle .sw { width: 40px; height: 22px; border-radius: 999px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.htoggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--panel); box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.htoggle input:checked + .sw { background: var(--navy); }
+.htoggle input:checked + .sw::after { transform: translateX(18px); }
+.htoggle input:focus-visible + .sw { outline: 2px solid var(--gold); outline-offset: 2px; }
+.htoggle input:disabled + .sw { opacity: .45; }
+.htoggle .hint { margin-left: 6px; }
+.files { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .files { grid-template-columns: 1fr; } }
+.drop { border: 1.5px dashed var(--line); border-radius: 9px; padding: 16px; display: grid; gap: 6px; background: var(--bg); min-width: 0; position: relative; }
+.drop.over { border-color: var(--gold); background: var(--gold-soft); }
+.drop.ok { border-style: solid; border-color: var(--green); }
+.drop .lbl { font-weight: 700; font-size: 14px; }
+.drop .what { color: var(--muted); font-size: 12.5px; }
+.drop input[type=file] { font: inherit; font-size: 13px; max-width: 100%; }
+.drop .meta { font-family: var(--mono); font-size: 12px; color: var(--ink); overflow-wrap: anywhere; }
+.drop .warn { color: var(--orange); font-size: 12.5px; font-weight: 600; }
+.actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+button { font: inherit; font-weight: 600; font-size: 14px; border-radius: 8px; padding: 10px 16px; cursor: pointer; border: 1.5px solid var(--navy); background: var(--panel); color: var(--navy); }
+button.primary { background: var(--navy); color: var(--panel); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.status-line { font-size: 13.5px; color: var(--muted); }
+.err { color: var(--red); font-weight: 600; font-size: 13.5px; }
+.verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.verdict { border-radius: 8px; padding: 12px 14px; border-left: 5px solid var(--line); background: var(--soft); display: grid; gap: 4px; min-width: 0; }
+.verdict.RED { border-left-color: var(--red); background: var(--red-soft); }
+.verdict.ORANGE { border-left-color: var(--orange); background: var(--orange-soft); }
+.verdict.GREEN { border-left-color: var(--green); background: var(--green-soft); }
+.verdict .h { font-weight: 700; font-size: 13.5px; }
+.verdict .c { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.verdict .tl { color: var(--muted); font-size: 12px; }
+.flag { border-radius: 8px; padding: 10px 14px; font-weight: 700; font-size: 14px; color: #ffffff; background: var(--red); }
+.flag.GREEN { background: var(--green); }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+.tabs button { border: none; border-bottom: 3px solid transparent; border-radius: 0; background: none; color: var(--muted); padding: 8px 10px; }
+.tabs button[aria-selected=true] { color: var(--ink); border-bottom-color: var(--gold); }
+.sheet { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: #ffffff; }
+.sheet svg { display: block; width: 100%; height: auto; min-width: 640px; }
+.find { display: grid; gap: 14px; }
+.find h3 { font-size: 14px; margin: 0; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.find h3 .cnt { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.pt { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+td.cm { color: var(--muted); font-size: 12.5px; min-width: 260px; }
+.pill { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; color: #ffffff; }
+.pill.RED { background: var(--red); } .pill.ORANGE { background: var(--orange); } .pill.GREEN { background: var(--green); } .pill.INFO { background: var(--muted); }
+.toggle { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.dl { display: flex; gap: 10px; flex-wrap: wrap; }
+.note { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 8px; }
+.note strong { color: var(--ink); }
+.tol { overflow-x: auto; }
+.tol table td, .tol table th { font-size: 12.5px; }
+.empty { color: var(--muted); font-size: 14px; padding: 18px; border: 1px dashed var(--line); border-radius: 8px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="logo-chip"><img id="logo" alt="Elevate Surveying" src="{{LOGO}}"></span>
+      <div>
+        <h1>Field QA</h1>
+        <p class="sub">Check Topcon field data against the calc before it leaves site.</p>
+      </div>
+    </div>
+    <span class="ver">tool v18 · rules 19 Nov 2026</span>
+  </header>
+
+  <section class="step" aria-labelledby="s1">
+    <h2 id="s1"><span class="n">1</span>Job type</h2>
+    <p class="hint">Pick the job type first. It sets the tolerances and whether heights are graded - switch heights off for a position-only job.</p>
+    <div class="jobs" role="radiogroup" aria-labelledby="s1">
+      <label class="job"><input type="radio" name="job" id="job-detail" value="detail">
+        <span class="t">Detail survey <span class="tick"></span></span>
+        <dl><dt>Heights</dt><dd>graded</dd><dt>Calc to survey</dt><dd>10 / 15 mm</dd><dt>Survey checks</dt><dd>10 / 20 mm</dd></dl></label>
+      <label class="job"><input type="radio" name="job" id="job-cadastral" value="cadastral">
+        <span class="t">Cadastral <span class="tick"></span></span>
+        <dl><dt>Heights</dt><dd>not graded</dd><dt>Calc to survey</dt><dd>10 / 15 mm</dd><dt>Survey checks</dt><dd>5 / 10 mm</dd></dl></label>
+      <label class="job"><input type="radio" name="job" id="job-bso" value="bso">
+        <span class="t">Building setout <span class="tick"></span></span>
+        <dl><dt>Heights</dt><dd>graded</dd><dt>Calc / checks</dt><dd>10/15 · 5/10 mm</dd><dt>Setout to design</dt><dd>5 mm pass/fail</dd></dl></label>
+    </div>
+    <label class="htoggle"><input type="checkbox" id="heights" role="switch" disabled>
+      <span class="sw" aria-hidden="true"></span>
+      <span><strong>Check heights</strong> <span class="hint" id="hnote">Pick a job type first.</span></span></label>
+  </section>
+
+  <section class="step" aria-labelledby="s2">
+    <h2 id="s2"><span class="n">2</span>Files</h2>
+    <p class="hint">Use the upload file that went to the controller as the calc, and the MXL exported from Topcon Field after the job. Export with raw observations so setups, backsights and resections can be checked.</p>
+    <div class="files">
+      <div class="drop" id="drop-calc">
+        <span class="lbl">Calc file</span>
+        <span class="what">The upload / pre MXL from Topcon Office</span>
+        <input type="file" id="file-calc" accept=".mxl,.xml">
+        <span class="meta" id="meta-calc"></span>
+      </div>
+      <div class="drop" id="drop-survey">
+        <span class="lbl">Field file</span>
+        <span class="what">The MXL downloaded from Topcon Field</span>
+        <input type="file" id="file-survey" accept=".mxl,.xml">
+        <span class="meta" id="meta-survey"></span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="run" disabled>Check job</button>
+      <span class="status-line" id="runmsg">Choose a job type and add both files.</span>
+    </div>
+  </section>
+
+  <section class="step" aria-labelledby="s3" id="results">
+    <h2 id="s3"><span class="n">3</span>Results</h2>
+    <div id="res-empty" class="empty">The verdict for each report section, the plans and the findings list appear here after you check a job.</div>
+    <div id="res" hidden>
+      <div class="find" style="gap:12px">
+        <div id="flags" style="display:grid;gap:8px"></div>
+        <div class="verdicts" id="verdicts"></div>
+        <div class="tabs" role="tablist" id="tabs"></div>
+        <div class="sheet" id="sheet"></div>
+        <div class="find" id="findings"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" aria-labelledby="s4">
+    <h2 id="s4"><span class="n">4</span>Download</h2>
+    <p class="hint" id="dl-hint">Each download asks you to confirm the save. The zip holds everything, including the DXF drawings for CAD. Open a DXF in BricsCAD and Save As DWG to amend it; it is drawn in real MGA coordinates at the plotted scale, with named layers.</p>
+    <div class="dl">
+      <button id="dl-check" disabled>Check plot (PDF)</button>
+      <button id="dl-setout" disabled hidden>Setout check (PDF)</button>
+      <button id="dl-sketch" disabled hidden>Client setout sketch (PDF)</button>
+      <button id="dl-cad" disabled hidden>Setout + sketch for CAD (ZIP of DXF)</button>
+      <button id="dl-csv" disabled>Report (CSV)</button>
+      <button id="dl-zip" class="primary" disabled>All files (ZIP with DXF)</button>
+    </div>
+    <span class="status-line" id="dlmsg"></span>
+    <div class="note">
+      <p><strong>This is a checking aid.</strong> A green report means the field data agrees with the calc and with itself inside the tolerances below. It does not replace review and sign-off by a registered surveyor, and a senior can override any result with a reason on file.</p>
+      <div class="tol"><table>
+        <thead><tr><th>Job type</th><th>Heights</th><th>1 Calc to survey (after best fit)</th><th>2 Survey to survey</th><th>3 Setout to design</th></tr></thead>
+        <tbody>
+          <tr><td>Detail</td><td>graded</td><td class="num">≤10 green · ≤15 orange · &gt;15 red</td><td class="num">≤10 · ≤20 · &gt;20</td><td>-</td></tr>
+          <tr><td>Cadastral</td><td>not graded</td><td class="num">≤10 · ≤15 · &gt;15</td><td class="num">≤5 · ≤10 · &gt;10</td><td>-</td></tr>
+          <tr><td>Building setout</td><td>graded</td><td class="num">≤10 · ≤15 · &gt;15</td><td class="num">≤5 · ≤10 · &gt;10</td><td class="num">pass ≤5, fail &gt;5</td></tr>
+        </tbody></table></div>
+      <p>Boundary checks need at least 3 independent agreeing marks; marks used to set up the instrument do not count. Any setout item outside 5 mm stops release and watermarks the client sketch.</p>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.3/dist/svg2pdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>{{ENGINE}}</script>
+<script>{{RENDER}}</script>
+<script>
+(function () {
+  "use strict";
+  const QA = window.FieldQA, RD = window.FieldQARender;
+  const LOGO = document.getElementById("logo").getAttribute("src");
+  const $ = (id) => document.getElementById(id);
+  const state = { job: null, calc: null, survey: null, R: null, sheets: {}, base: "", tab: "check" };
+  let downloads = null;
+  const hosted = !!(window.claude && typeof window.claude.use === "function");
+  const dlReady = hosted ? window.claude.use("downloads").then((d) => { downloads = d; return d; }).catch(() => null) : Promise.resolve(null);
+  function readyCheck() {
+    const ok = state.job && state.calc && state.survey;
+    $("run").disabled = !ok;
+    $("runmsg").textContent = ok ? "Ready to check." : (!state.job ? "Choose a job type." : "Add both files.");
+  }
+  const HDEF = { detail: true, cadastral: false, bso: true };
+  const hNote = () => { const on = $("heights").checked, def = HDEF[state.job];
+    $("hnote").textContent = on ? "Heights graded on checks, backsights and repeat shots." + (def ? "" : " (Off by default for this job type.)")
+      : "Position only (2D) - heights are not checked or reported." + (def ? " Use when the job only needs position, e.g. a 2D setout." : ""); };
+  document.querySelectorAll('input[name="job"]').forEach((r) => r.addEventListener("change", () => { state.job = r.value; $("heights").disabled = false; $("heights").checked = HDEF[r.value]; hNote(); readyCheck(); }));
+  $("heights").addEventListener("change", () => { hNote(); readyCheck(); });
+  function describe(doc) {
+    const root = doc.documentElement;
+    const app = (root.getElementsByTagName("tps:Application")[0] || {}).textContent || "unknown";
+    const ver = (root.getElementsByTagName("tps:Version")[0] || {}).textContent || "";
+    const job = (root.getElementsByTagName("tps:ProjectInfo")[0] && root.getElementsByTagName("tps:ProjectInfo")[0].getElementsByTagName("tps:Name")[0] || {}).textContent || "";
+    const n = root.getElementsByTagName("tps:DesignPoint").length, raw = root.getElementsByTagName("tps:TSRawSS").length;
+    return { app, ver, job, n, raw };
+  }
+  function loadFile(which, file) {
+    const meta = $("meta-" + which), box = $("drop-" + which);
+    const fr = new FileReader();
+    fr.onload = () => {
+      const doc = new DOMParser().parseFromString(fr.result, "application/xml");
+      if (doc.getElementsByTagName("parsererror").length || !doc.documentElement || !/MAXML/.test(doc.documentElement.nodeName)) {
+        state[which] = null; box.classList.remove("ok"); meta.innerHTML = '<span class="err">This is not a Topcon MXL file. Export the job as MXL and try again.</span>'; readyCheck(); return;
+      }
+      const d = describe(doc);
+      state[which] = { doc, name: file.name };
+      box.classList.add("ok");
+      let html = `${file.name}<br>${d.app} ${d.ver} · ${d.n} points` + (d.job ? ` · ${d.job}` : "");
+      if (which === "survey") html += d.raw ? ` · ${d.raw} raw shots` : `<br><span class="warn">No raw observations in this export - setups, backsights and traverse lines can't be checked. Re-export with raw data if you can.</span>`;
+      meta.innerHTML = html; readyCheck();
+    };
+    fr.onerror = () => { meta.innerHTML = '<span class="err">Could not read the file.</span>'; };
+    fr.readAsText(file);
+  }
+  for (const which of ["calc", "survey"]) {
+    const inp = $("file-" + which), box = $("drop-" + which);
+    inp.addEventListener("change", () => { if (inp.files[0]) loadFile(which, inp.files[0]); });
+    box.addEventListener("dragover", (e) => { e.preventDefault(); box.classList.add("over"); });
+    box.addEventListener("dragleave", () => box.classList.remove("over"));
+    box.addEventListener("drop", (e) => { e.preventDefault(); box.classList.remove("over"); if (e.dataTransfer.files[0]) loadFile(which, e.dataTransfer.files[0]); });
+  }
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function render() {
+    const R = state.R;
+    $("res-empty").hidden = true; $("res").hidden = false;
+    const flags = [];
+    for (const r of R.rows.filter((r) => r.level === "L1 best fit" && r.status === "RED")) flags.push(`<div class="flag">Job flagged for review - ${esc(r.pt)}: ${esc(r.ref)} (minimum 3 independent agreeing marks)</div>`);
+    const rel = R.rows.find((r) => r.level === "SO release");
+    if (rel) flags.push(`<div class="flag ${rel.status}">Setout: ${esc(rel.comment)}</div>`);
+    if (!R.raw) flags.push(`<div class="flag" style="background:var(--orange)">No raw observations in the field file - setups and traverse not checked</div>`);
+    $("flags").innerHTML = flags.join("");
+    const tl = { "1": `after best fit: green ≤${QA.f0(R.tol.BDY_GREEN * 1000)}, orange ≤${QA.f0(R.tol.BDY_ORANGE * 1000)} mm`, "2": `green ≤${QA.f0(R.tol.GREEN * 1000)}, orange ≤${QA.f0(R.tol.ORANGE * 1000)} mm` + (R.prof.heights ? "" : ", horizontal only"), "3": `pass ≤${QA.f0(R.tol.SETOUT_TOL * 1000)} mm` };
+    let v = "", f = "";
+    for (const [k, name] of QA.SECTIONS) {
+      const sr = R.sorted.filter((r) => QA.section(r.level) === k); if (!sr.length) continue;
+      const c = { RED: 0, ORANGE: 0, GREEN: 0 }; sr.forEach((r) => { if (c[r.status] !== undefined) c[r.status]++; });
+      const worst = c.RED ? "RED" : c.ORANGE ? "ORANGE" : "GREEN";
+      v += `<div class="verdict ${worst}"><span class="h">${k}. ${name.charAt(0) + name.slice(1).toLowerCase()}</span><span class="c">${c.RED} red · ${c.ORANGE} orange · ${c.GREEN} green</span><span class="tl">${tl[k]}</span></div>`;
+      const showAll = $("showgreen") && $("showgreen").checked;
+      const list = sr.filter((r) => showAll || r.status === "RED" || r.status === "ORANGE");
+      f += `<div><h3>${k}. ${name.charAt(0) + name.slice(1).toLowerCase()}<span class="cnt">${list.length} shown</span></h3><div class="tbl"><table><thead><tr><th>Result</th><th>Check</th><th>Point</th><th>Compared to</th><th>dH</th><th>dV</th><th>What it means</th></tr></thead><tbody>` +
+        (list.length ? list.map((r) => `<tr><td><span class="pill ${r.status}">${r.status}</span></td><td>${esc(r.level)}</td><td class="pt">${esc(r.pt)}</td><td>${esc(r.ref)}</td><td class="num">${QA.mm(r.dH)}</td><td class="num">${QA.mm(r.dV)}</td><td class="cm">${esc(r.comment)}</td></tr>`).join("")
+          : `<tr><td colspan="7" class="cm">Nothing red or orange in this section.</td></tr>`) + `</tbody></table></div></div>`;
+    }
+    $("verdicts").innerHTML = v;
+    $("findings").innerHTML = `<label class="toggle"><input type="checkbox" id="showgreen"${state.showGreen ? " checked" : ""}> Show green and info rows too</label>` + f;
+    $("showgreen").addEventListener("change", (e) => { state.showGreen = e.target.checked; render(); });
+    const tabs = [["check", "Check plot"]];
+    if (state.sheets.setout) tabs.push(["setout", "Setout check"]);
+    if (state.sheets.sketch) tabs.push(["sketch", "Client setout sketch"]);
+    if (!tabs.some((t) => t[0] === state.tab)) state.tab = "check";
+    $("tabs").innerHTML = tabs.map(([id, lab]) => `<button role="tab" id="tab-${id}" aria-selected="${state.tab === id}">${lab}</button>`).join("");
+    tabs.forEach(([id]) => $("tab-" + id).addEventListener("click", () => { state.tab = id; render(); }));
+    $("sheet").innerHTML = state.sheets[state.tab];
+  }
+  $("run").addEventListener("click", () => {
+    $("runmsg").textContent = "Checking..."; $("run").disabled = true;
+    setTimeout(() => {
+      try {
+        const R = QA.run(state.survey.doc, state.calc.doc, state.job, { heights: $("heights").checked });
+        R.fileName = state.survey.name;
+        state.R = R; state.base = state.survey.name.replace(/\.[^.]+$/, "") + "_QA";
+        state.sheets = { check: RD.checkPlot(R, LOGO), setout: RD.setoutSheet(R, LOGO), sketch: RD.clientSketch(R, LOGO) };
+        render();
+        const so = !!state.sheets.setout;
+        $("dl-setout").hidden = !so; $("dl-sketch").hidden = !so; $("dl-cad").hidden = !so;
+        for (const id of ["dl-check", "dl-csv", "dl-zip", "dl-setout", "dl-sketch", "dl-cad"]) $(id).disabled = false;
+        const red = R.rows.filter((r) => r.status === "RED").length;
+        $("runmsg").textContent = `Checked ${R.survey.length} field points as ${R.prof.label.toLowerCase()}: ${red} red.`;
+        $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (e) {
+        $("runmsg").innerHTML = `<span class="err">Could not check this job: ${esc(e.message || e)}. Check that the calc and field files are the right way round.</span>`;
+      }
+      $("run").disabled = false;
+    }, 30);
+  });
+  async function pdfBlob(svgString) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a3", compress: true });
+    const holder = document.createElement("div"); holder.style.cssText = "position:fixed;left:-99999px;top:0;width:1587px;height:1123px;";
+    holder.innerHTML = svgString; document.body.appendChild(holder);
+    try { await doc.svg(holder.firstElementChild, { x: 0, y: 0, width: 1190.55, height: 841.89 }); }
+    finally { holder.remove(); }
+    return doc.output("blob");
+  }
+  async function save(filename, data) {
+    $("dlmsg").textContent = "Preparing " + filename + "...";
+    try {
+      const d = downloads || await dlReady;
+      if (d) { await d.save({ filename, data }); $("dlmsg").textContent = "Saved " + filename + "."; }
+      else {
+        const a = document.createElement("a"); a.href = URL.createObjectURL(data instanceof Blob ? data : new Blob([data])); a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        $("dlmsg").textContent = hosted ? "If " + filename + " did not download, sign in to claude.ai and open the link again, or use the office copy of the tool (Elevate-Field-QA.html) on your PC." : "Saved " + filename + ".";
+      }
+    } catch (e) {
+      const code = e && e.code;
+      $("dlmsg").textContent = code === "declined" ? "Save cancelled." : code === "rate_limited" ? "A save is already waiting for confirmation." : "Could not save " + filename + (e && e.message ? ": " + e.message : ".");
+    }
+  }
+  $("dl-check").addEventListener("click", async () => save(state.base + ".pdf", await pdfBlob(state.sheets.check)));
+  $("dl-setout").addEventListener("click", async () => save(state.base + "_SETOUT.pdf", await pdfBlob(state.sheets.setout)));
+  $("dl-sketch").addEventListener("click", async () => save(state.base + "_SKETCH.pdf", await pdfBlob(state.sheets.sketch)));
+  $("dl-cad").addEventListener("click", async () => {
+    const z = new JSZip();
+    z.file(state.base + "_SETOUT.dxf", RD.setoutDXF(state.R));
+    z.file(state.base + "_SKETCH.dxf", RD.clientSketchDXF(state.R));
+    save(state.base + "_CAD.zip", await z.generateAsync({ type: "blob" }));
+  });
+  $("dl-csv").addEventListener("click", () => save(state.base + ".csv", QA.csv(state.R)));
+  $("dl-zip").addEventListener("click", async () => {
+    $("dlmsg").textContent = "Building zip...";
+    const z = new JSZip();
+    z.file(state.base + ".pdf", await pdfBlob(state.sheets.check));
+    if (state.sheets.setout) z.file(state.base + "_SETOUT.pdf", await pdfBlob(state.sheets.setout));
+    if (state.sheets.sketch) z.file(state.base + "_SKETCH.pdf", await pdfBlob(state.sheets.sketch));
+    z.file(state.base + ".csv", QA.csv(state.R));
+    z.file(state.base + ".dxf", RD.dxf(state.R));
+    if (state.sheets.setout) { z.file(state.base + "_SETOUT.dxf", RD.setoutDXF(state.R)); z.file(state.base + "_SKETCH.dxf", RD.clientSketchDXF(state.R)); }
+    save(state.base + ".zip", await z.generateAsync({ type: "blob" }));
+  });
+  readyCheck();
+})();
+</script>
